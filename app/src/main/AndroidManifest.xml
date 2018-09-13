@@ -26,6 +26,7 @@
             android:name=".InventoryProvider"
             android:authorities="com.example.android.inventoryapp"
             android:exported="false" />
+         <activity android:name=".SeeDetailsActivity" />
     </application>
 
 
