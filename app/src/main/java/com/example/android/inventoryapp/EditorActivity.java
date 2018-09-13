@@ -2,14 +2,17 @@ package com.example.android.inventoryapp;
 
 import android.app.AlertDialog;
 import android.app.LoaderManager;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.CursorLoader;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
@@ -19,6 +22,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -45,6 +49,12 @@ public class EditorActivity extends AppCompatActivity implements
 
     private boolean mProductHasChanged = false;
 
+    private Button seedetails;
+
+    public String name, suppliername;
+
+    public int price, quantity, supplierphno;
+
 
     private View.OnTouchListener mTouchListener = new View.OnTouchListener() {
         @Override
@@ -63,11 +73,11 @@ public class EditorActivity extends AppCompatActivity implements
         mCurrentProductUri = intent.getData();
 
         if (mCurrentProductUri == null) {
-            setTitle(getString(R.string.editor_activity_title_new_pet));
+            setTitle("Add a product");
 
             invalidateOptionsMenu();
         } else {
-            setTitle(getString(R.string.editor_activity_title_edit_pet));
+            setTitle("Edit Product");
 
             getLoaderManager().initLoader(EXISTING_PRODUCT_LOADER, null, this);
         }
@@ -75,8 +85,9 @@ public class EditorActivity extends AppCompatActivity implements
         mNameEditText = (EditText) findViewById(R.id.edit_product_name);
         mPriceEditText = (EditText) findViewById(R.id.edit_product_price);
         mQuantityEditText = (EditText) findViewById(R.id.edit_product_quantity);
-        mSupplierNameEditText=(EditText)findViewById(R.id.edit_supplier_name);
-        mSupplierPhNoEditText=(EditText)findViewById(R.id.edit_supplier_phno);
+        mSupplierNameEditText = (EditText) findViewById(R.id.edit_supplier_name);
+        mSupplierPhNoEditText = (EditText) findViewById(R.id.edit_supplier_phno);
+        seedetails = (Button) findViewById(R.id.see_details);
 
         mNameEditText.setOnTouchListener(mTouchListener);
         mPriceEditText.setOnTouchListener(mTouchListener);
@@ -84,20 +95,27 @@ public class EditorActivity extends AppCompatActivity implements
         mSupplierNameEditText.setOnTouchListener(mTouchListener);
         mSupplierPhNoEditText.setOnTouchListener(mTouchListener);
 
+        seedetails.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int id = getIntent().getIntExtra("id", 1);
+                Intent i = new Intent(getApplicationContext(), SeeDetailsActivity.class);
+                i.putExtra("mCurrentProductUri", mCurrentProductUri.toString());
+                Uri currentProductUri = ContentUris.withAppendedId(ProductEntry.CONTENT_URI, id);
+                i.setData(currentProductUri);
+                startActivity(i);
+            }
+        });
+
     }
 
 
-
-
-
-
-
-    private void savePet() {
+    private void saveProduct() {
         String nameString = mNameEditText.getText().toString().trim();
         String priceString = mPriceEditText.getText().toString().trim();
         String quantityString = mQuantityEditText.getText().toString().trim();
-        String suppliernameString=mSupplierNameEditText.getText().toString().trim();
-        String supplierphnoString=mSupplierPhNoEditText.getText().toString().trim();
+        String suppliernameString = mSupplierNameEditText.getText().toString().trim();
+        String supplierphnoString = mSupplierPhNoEditText.getText().toString().trim();
 
         if (mCurrentProductUri == null &&
                 TextUtils.isEmpty(nameString) && TextUtils.isEmpty(priceString)) {
@@ -107,20 +125,16 @@ public class EditorActivity extends AppCompatActivity implements
         ContentValues values = new ContentValues();
         values.put(ProductEntry.COLUMN_PRODUCT_NAME, nameString);
         values.put(ProductEntry.COLUMN_PRICE, priceString);
-        values.put(ProductEntry.COLUMN_QUANTITY,quantityString);
-        values.put(ProductEntry.COLUMN_SUPPLIER_NAME,suppliernameString);
-        values.put(ProductEntry.COLUMN_SUPPLIER_PHNO,supplierphnoString);
+        values.put(ProductEntry.COLUMN_QUANTITY, quantityString);
+        values.put(ProductEntry.COLUMN_SUPPLIER_NAME, suppliernameString);
+        values.put(ProductEntry.COLUMN_SUPPLIER_PHNO, supplierphnoString);
 
         int quantity = 0;
         if (!TextUtils.isEmpty(quantityString)) {
             quantity = Integer.parseInt(quantityString);
         }
         values.put(ProductEntry.COLUMN_QUANTITY, quantity);
-
-        // Determine if this is a new or existing pet by checking if mCurrentPetUri is null or not
         if (mCurrentProductUri == null) {
-            // This is a NEW pet, so insert a new pet into the provider,
-            // returning the content URI for the new pet.
             Uri newUri = getContentResolver().insert(ProductEntry.CONTENT_URI, values);
 
             // Show a toast message depending on whether or not the insertion was successful.
@@ -165,7 +179,6 @@ public class EditorActivity extends AppCompatActivity implements
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
-        // If this is a new pet, hide the "Delete" menu item.
         if (mCurrentProductUri == null) {
             MenuItem menuItem = menu.findItem(R.id.action_delete);
             menuItem.setVisible(false);
@@ -179,8 +192,7 @@ public class EditorActivity extends AppCompatActivity implements
         switch (item.getItemId()) {
             // Respond to a click on the "Save" menu option
             case R.id.action_save:
-                // Save pet to database
-                savePet();
+                saveProduct();
                 // Exit activity
                 finish();
                 return true;
@@ -191,8 +203,7 @@ public class EditorActivity extends AppCompatActivity implements
                 return true;
             // Respond to a click on the "Up" arrow button in the app bar
             case android.R.id.home:
-                // If the pet hasn't changed, continue with navigating up to parent activity
-                // which is the {@link CatalogActivity}.
+
                 if (!mProductHasChanged) {
                     NavUtils.navigateUpFromSameTask(EditorActivity.this);
                     return true;
@@ -222,7 +233,6 @@ public class EditorActivity extends AppCompatActivity implements
      */
     @Override
     public void onBackPressed() {
-        // If the pet hasn't changed, continue with handling back button press
         if (!mProductHasChanged) {
             super.onBackPressed();
             return;
@@ -245,15 +255,13 @@ public class EditorActivity extends AppCompatActivity implements
 
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
-        // Since the editor shows all pet attributes, define a projection that contains
-        // all columns from the pet table
         String[] projection = {
                 ProductEntry._ID,
                 ProductEntry.COLUMN_PRODUCT_NAME,
                 ProductEntry.COLUMN_PRICE,
                 ProductEntry.COLUMN_QUANTITY,
                 ProductEntry.COLUMN_SUPPLIER_NAME,
-                 ProductEntry.COLUMN_SUPPLIER_PHNO};
+                ProductEntry.COLUMN_SUPPLIER_PHNO};
 
         // This loader will execute the ContentProvider's query method on a background thread
         return new CursorLoader(this,   // Parent activity context
@@ -271,27 +279,36 @@ public class EditorActivity extends AppCompatActivity implements
             return;
         }
 
-        // Proceed with moving to the first row of the cursor and reading data from it
-        // (This should be the only row in the cursor)
         if (cursor.moveToFirst()) {
-            // Find the columns of pet attributes that we're interested in
+
             int nameColumnIndex = cursor.getColumnIndex(ProductEntry.COLUMN_PRODUCT_NAME);
             int priceColumnIndex = cursor.getColumnIndex(ProductEntry.COLUMN_PRICE);
             int quantityColumnIndex = cursor.getColumnIndex(ProductEntry.COLUMN_QUANTITY);
             int suppliernameColumnIndex = cursor.getColumnIndex(ProductEntry.COLUMN_SUPPLIER_NAME);
-            int supplierphColumnIndex=cursor.getColumnIndex(ProductEntry.COLUMN_SUPPLIER_PHNO);
-            String name = cursor.getString(nameColumnIndex);
-            int price = cursor.getInt(priceColumnIndex);
-            int quantity = cursor.getInt(quantityColumnIndex);
-            String suppliername = cursor.getString(suppliernameColumnIndex);
-            int supplierphno=cursor.getInt(supplierphColumnIndex);
+            int supplierphColumnIndex = cursor.getColumnIndex(ProductEntry.COLUMN_SUPPLIER_PHNO);
+            name = cursor.getString(nameColumnIndex);
+            price = cursor.getInt(priceColumnIndex);
+            quantity = cursor.getInt(quantityColumnIndex);
+            suppliername = cursor.getString(suppliernameColumnIndex);
+            supplierphno = cursor.getInt(supplierphColumnIndex);
 
             // Update the views on the screen with the values from the database
             mNameEditText.setText(name);
-            mPriceEditText.setText(price);
+            mPriceEditText.setText(Integer.toString(price));
             mSupplierNameEditText.setText(suppliername);
-            mSupplierPhNoEditText.setText(supplierphno);
+            mSupplierPhNoEditText.setText(Integer.toString(supplierphno));
             mQuantityEditText.setText(Integer.toString(quantity));
+
+            int nametext = mNameEditText.getText().toString().trim().length();
+            int pricetext = mPriceEditText.getText().toString().trim().length();
+            int quantitytext = mQuantityEditText.getText().toString().trim().length();
+            int suppname = mSupplierNameEditText.getText().toString().trim().length();
+            int suppphno = mSupplierPhNoEditText.getText().toString().trim().length();
+
+            if (nametext == 0 || pricetext == 0 || quantitytext == 0 || suppname == 0 || suppphno == 0) {
+                Toast.makeText(getApplicationContext(), "Please fill all the details", Toast.LENGTH_SHORT).show();
+            }
+
 
         }
     }
@@ -315,8 +332,6 @@ public class EditorActivity extends AppCompatActivity implements
         builder.setPositiveButton(R.string.discard, discardButtonClickListener);
         builder.setNegativeButton(R.string.keep_editing, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-                // User clicked the "Keep editing" button, so dismiss the dialog
-                // and continue editing the pet.
                 if (dialog != null) {
                     dialog.dismiss();
                 }
@@ -328,15 +343,12 @@ public class EditorActivity extends AppCompatActivity implements
         alertDialog.show();
     }
 
-    /**
-     * Prompt the user to confirm that they want to delete this pet.
-     */
+
     private void showDeleteConfirmationDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(R.string.delete_dialog_msg);
+        builder.setMessage("Delete this product?");
         builder.setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-                // User clicked the "Delete" button, so delete the pet.
                 deleteProduct();
             }
         });
