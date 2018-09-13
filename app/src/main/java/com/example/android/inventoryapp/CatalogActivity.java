@@ -1,5 +1,7 @@
 package com.example.android.inventoryapp;
 
+import android.app.Activity;
+import android.app.Fragment;
 import android.app.LoaderManager;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -19,7 +21,7 @@ import android.widget.ListView;
 import android.support.design.widget.FloatingActionButton;
 
 import com.example.android.inventoryapp.InventoryContract.ProductEntry;
-
+import com.example.android.inventoryapp.EditorActivity;
 
 public class CatalogActivity extends AppCompatActivity implements
         LoaderManager.LoaderCallbacks<Cursor> {
@@ -61,6 +63,8 @@ public class CatalogActivity extends AppCompatActivity implements
 
                 intent.setData(currentProductUri);
 
+                intent.putExtra("id",id);
+
                 startActivity(intent);
             }
         });
@@ -72,10 +76,10 @@ public class CatalogActivity extends AppCompatActivity implements
     private void insertProduct() {
         ContentValues values = new ContentValues();
         values.put(ProductEntry.COLUMN_PRODUCT_NAME, "shoes");
-        values.put(ProductEntry.COLUMN_PRICE, "bata");
-        values.put(ProductEntry.COLUMN_QUANTITY,1);
+        values.put(ProductEntry.COLUMN_PRICE, "2");
+        values.put(ProductEntry.COLUMN_QUANTITY, 1);
         values.put(ProductEntry.COLUMN_SUPPLIER_NAME, "a");
-        values.put(ProductEntry.COLUMN_SUPPLIER_PHNO,12345);
+        values.put(ProductEntry.COLUMN_SUPPLIER_PHNO, 12345);
 
         Uri newUri = getContentResolver().insert(ProductEntry.CONTENT_URI, values);
     }
@@ -110,8 +114,7 @@ public class CatalogActivity extends AppCompatActivity implements
                 ProductEntry._ID,
                 ProductEntry.COLUMN_PRODUCT_NAME,
                 ProductEntry.COLUMN_PRICE,
-                 ProductEntry.COLUMN_SUPPLIER_NAME,
-        ProductEntry.COLUMN_SUPPLIER_PHNO};
+                ProductEntry.COLUMN_QUANTITY};
 
 
         return new CursorLoader(this,
@@ -130,6 +133,10 @@ public class CatalogActivity extends AppCompatActivity implements
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
         mCursorAdapter.swapCursor(null);
+    }
+
+    private void onClickSale() {
+
     }
 }
 
