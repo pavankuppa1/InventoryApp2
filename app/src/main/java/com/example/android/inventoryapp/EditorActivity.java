@@ -101,6 +101,11 @@ public class EditorActivity extends AppCompatActivity implements
                 int id = getIntent().getIntExtra("id", 1);
                 Intent i = new Intent(getApplicationContext(), SeeDetailsActivity.class);
                 i.putExtra("mCurrentProductUri", mCurrentProductUri.toString());
+                i.putExtra("name", mNameEditText.getText().toString());
+                i.putExtra("price", Integer.parseInt(mPriceEditText.getText().toString()));
+                i.putExtra("quantity", Integer.parseInt(mQuantityEditText.getText().toString()));
+                i.putExtra("suppliername", mSupplierNameEditText.getText().toString());
+                i.putExtra("supplierphno", Integer.parseInt(mSupplierPhNoEditText.getText().toString()));
                 Uri currentProductUri = ContentUris.withAppendedId(ProductEntry.CONTENT_URI, id);
                 i.setData(currentProductUri);
                 startActivity(i);
