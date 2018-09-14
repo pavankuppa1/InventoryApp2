@@ -34,8 +34,9 @@ import com.example.android.inventoryapp.EditorActivity;
 import org.w3c.dom.Text;
 
 
-public class SeeDetailsActivity extends AppCompatActivity implements
-        LoaderManager.LoaderCallbacks<Cursor> {
+public class SeeDetailsActivity extends AppCompatActivity //implements
+        //  LoaderManager.LoaderCallbacks<Cursor>
+{
 
     private String name;
     private int price;
@@ -50,6 +51,8 @@ public class SeeDetailsActivity extends AppCompatActivity implements
     private Uri mCurrentProductUri;
 
     private boolean mProductHasChanged = false;
+
+    private Button delete;
 
     private View.OnTouchListener mTouchListener = new View.OnTouchListener() {
         @Override
@@ -66,85 +69,59 @@ public class SeeDetailsActivity extends AppCompatActivity implements
 
 
         Intent intent = getIntent();
-        Uri mCurrentProductUri = intent.getParcelableExtra("mCurrentProductUri");
+        mCurrentProductUri = intent.getData();
 
-        if (mCurrentProductUri == null) {
-            invalidateOptionsMenu();
-        } else {
-
-
-            getLoaderManager().initLoader(EXISTING_PRODUCT_LOADER, null, this);
-        }
 
         proname = (TextView) findViewById(R.id.pro_name);
         proprice = (TextView) findViewById(R.id.pro_price);
         proquantity = (TextView) findViewById(R.id.edit_product_quantity);
         prosuppliername = (TextView) findViewById(R.id.supplier_name);
         prosupplierphno = (TextView) findViewById(R.id.supplier_phno);
+        delete = (Button) findViewById(R.id.delete);
+
+        name = intent.getStringExtra("name");
+        price = intent.getIntExtra("price", -1);
+        quantity = intent.getIntExtra("quantity", -1);
+        suppliername = intent.getStringExtra("suppliername");
+        supplierphno = intent.getIntExtra("supplierphno", -1);
+
+        proname.setText(name);
+        proprice.setText(String.valueOf(price));
+        proquantity.setText(String.valueOf(quantity));
+        prosuppliername.setText(suppliername);
+        prosupplierphno.setText(String.valueOf(supplierphno));
+
+        delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                showDeleteConfirmationDialog();
+
+
+            }
+        });
 
 
     }
 
-    @Override
-    public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
-        String[] projection = {
-                ProductEntry._ID,
-                ProductEntry.COLUMN_PRODUCT_NAME,
-                ProductEntry.COLUMN_PRICE,
-                ProductEntry.COLUMN_QUANTITY,
-                ProductEntry.COLUMN_SUPPLIER_NAME,
-                ProductEntry.COLUMN_SUPPLIER_PHNO};
-
-        // This loader will execute the ContentProvider's query method on a background thread
-        return new CursorLoader(this,   // Parent activity context
-                mCurrentProductUri,         // Query the content URI for the current pet
-                projection,             // Columns to include in the resulting Cursor
-                null,                   // No selection clause
-                null,                   // No selection arguments
-                null);
-
+    private void showDeleteConfirmationDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Delete this product?");
+        builder.setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                deleteProduct();
+            }
+        });
+        builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                if (dialog != null) {
+                    dialog.dismiss();
+                }
+            }
+        });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
     }
-
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-
-        if (cursor == null || cursor.getCount() < 1) {
-            return;
-        }
-
-        if (cursor.moveToFirst()) {
-
-            int nameColumnIndex = cursor.getColumnIndex(ProductEntry.COLUMN_PRODUCT_NAME);
-            int priceColumnIndex = cursor.getColumnIndex(ProductEntry.COLUMN_PRICE);
-            int quantityColumnIndex = cursor.getColumnIndex(ProductEntry.COLUMN_QUANTITY);
-            int suppliernameColumnIndex = cursor.getColumnIndex(ProductEntry.COLUMN_SUPPLIER_NAME);
-            int supplierphColumnIndex = cursor.getColumnIndex(ProductEntry.COLUMN_SUPPLIER_PHNO);
-            name = cursor.getString(nameColumnIndex);
-            price = cursor.getInt(priceColumnIndex);
-            quantity = cursor.getInt(quantityColumnIndex);
-            suppliername = cursor.getString(suppliernameColumnIndex);
-            supplierphno = cursor.getInt(supplierphColumnIndex);
-
-            // Update the views on the screen with the values from the database
-            proname.setText(name);
-            proprice.setText(Integer.toString(price));
-            proquantity.setText(suppliername);
-            prosuppliername.setText(Integer.toString(supplierphno));
-            prosupplierphno.setText(Integer.toString(quantity));
-
-
-        }
-    }
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-        proname.setText("");
-        proprice.setText("");
-        proquantity.setText("");
-        prosuppliername.setText("");
-        prosupplierphno.setText("");
-    }
-
 
     private void deleteProduct() {
         if (mCurrentProductUri != null) {
